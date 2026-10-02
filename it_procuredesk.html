@@ -1,0 +1,1888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IT-ProcureDesk | Enterprise IT Purchase Helpdesk</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Tone.js for soft auditory UI feedback -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0f7ff',
+              100: '#e0effe',
+              500: '#0284c7',
+              600: '#0369a1',
+              700: '#075985',
+              800: '#0c4a6e',
+              900: '#082f49'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    /* Custom clean scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col antialiased selection:bg-brand-500 selection:text-white">
+
+  <header class="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-brand-500/20">
+          <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="font-bold text-lg text-slate-800 tracking-tight">IT-Procure<span class="text-brand-600">Desk</span></span>
+            <span class="bg-brand-100 text-brand-700 text-xs px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              Gmail Hook Active
+            </span>
+          </div>
+          <p class="text-xs text-slate-500 hidden sm:block">Enterprise IT Procurement & Hardware Ticketing</p>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="flex items-center space-x-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
+        <button id="nav-staff-btn" onclick="switchView('staff')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 flex items-center space-x-1.5 bg-white text-brand-700 shadow-sm">
+          <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+          <span class="hidden md:inline">IT Staff Board</span>
+        </button>
+        <button id="nav-portal-btn" onclick="switchView('portal')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 flex items-center space-x-1.5 text-slate-600 hover:text-slate-900">
+          <i data-lucide="user-check" class="w-4 h-4"></i>
+          <span class="hidden md:inline">Employee Portal</span>
+        </button>
+        <button id="nav-gmail-btn" onclick="switchView('gmail')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 flex items-center space-x-1.5 text-slate-600 hover:text-slate-900 relative">
+          <i data-lucide="mail" class="w-4 h-4 text-red-500"></i>
+          <span class="hidden md:inline">Gmail Simulator</span>
+          <span id="unread-inbox-badge" class="bg-red-500 text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full font-bold ml-1">2</span>
+        </button>
+        <button id="nav-db-btn" onclick="switchView('db')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 flex items-center space-x-1.5 text-slate-600 hover:text-slate-900">
+          <i data-lucide="database" class="w-4 h-4 text-emerald-600"></i>
+          <span class="hidden md:inline">SQL & API Schema</span>
+        </button>
+      </nav>
+
+      <!-- Quick Action Buttons -->
+      <div class="flex items-center space-x-2">
+        <button onclick="openNewTicketModal()" class="px-3.5 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold shadow-sm hover:shadow transition-all flex items-center space-x-1.5">
+          <i data-lucide="plus" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">New Request</span>
+        </button>
+        <button onclick="exportData()" title="Export JSON" class="p-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 transition-colors">
+          <i data-lucide="download" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full">
+
+    <!-- ================= VIEW 1: IT STAFF DASHBOARD ================= -->
+    <section id="view-staff" class="space-y-6">
+      
+      <!-- Metrics overview cards -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+          <div>
+            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Requests</p>
+            <h3 id="stat-total" class="text-2xl font-bold text-slate-800 mt-1">0</h3>
+            <p class="text-[11px] text-slate-400 mt-0.5">Across all departments</p>
+          </div>
+          <div class="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+            <i data-lucide="clipboard-list" class="w-5 h-5"></i>
+          </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+          <div>
+            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Pending Approval</p>
+            <h3 id="stat-pending" class="text-2xl font-bold text-amber-600 mt-1">0</h3>
+            <p class="text-[11px] text-amber-500 font-medium mt-0.5">Requires Mgr/Finance</p>
+          </div>
+          <div class="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+            <i data-lucide="clock" class="w-5 h-5"></i>
+          </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+          <div>
+            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Approved Spend</p>
+            <h3 id="stat-spend" class="text-2xl font-bold text-emerald-600 mt-1">$0</h3>
+            <p class="text-[11px] text-emerald-500 font-medium mt-0.5">Sanctioned orders</p>
+          </div>
+          <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <i data-lucide="badge-dollar-sign" class="w-5 h-5"></i>
+          </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+          <div>
+            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Avg SLA Turnaround</p>
+            <h3 class="text-2xl font-bold text-indigo-600 mt-1">1.8 <span class="text-xs font-normal">days</span></h3>
+            <p class="text-[11px] text-slate-400 mt-0.5">Target: 3 business days</p>
+          </div>
+          <div class="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+            <i data-lucide="zap" class="w-5 h-5"></i>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div class="flex flex-1 items-center space-x-2">
+          <div class="relative flex-1 max-w-md">
+            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 transform -translate-y-1/2"></i>
+            <input type="text" id="staff-search-input" oninput="renderBoard()" placeholder="Search by Ticket ID, Requester, or Item..." class="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+          </div>
+          <select id="staff-filter-dept" onchange="renderBoard()" class="text-xs py-2 px-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20 bg-white text-slate-600">
+            <option value="all">All Departments</option>
+            <option value="Engineering">Engineering</option>
+            <option value="Design">Design</option>
+            <option value="Marketing">Marketing</option>
+            <option value="Sales">Sales</option>
+            <option value="HR / Ops">HR / Ops</option>
+          </select>
+          <select id="staff-filter-cat" onchange="renderBoard()" class="text-xs py-2 px-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20 bg-white text-slate-600">
+            <option value="all">All Categories</option>
+            <option value="Laptop / Workstation">Laptop / PC</option>
+            <option value="Monitors & Displays">Monitors</option>
+            <option value="Peripherals">Peripherals</option>
+            <option value="Software License">Software</option>
+            <option value="Cloud / SaaS">Cloud / SaaS</option>
+          </select>
+        </div>
+
+        <!-- Layout toggle: Kanban vs Table -->
+        <div class="flex items-center space-x-2">
+          <div class="flex p-0.5 bg-slate-100 rounded-xl border border-slate-200">
+            <button id="layout-kanban-btn" onclick="setBoardLayout('kanban')" class="px-3 py-1 text-xs rounded-lg font-medium bg-white text-brand-700 shadow-sm flex items-center space-x-1">
+              <i data-lucide="columns-3" class="w-3.5 h-3.5"></i>
+              <span>Kanban</span>
+            </button>
+            <button id="layout-table-btn" onclick="setBoardLayout('table')" class="px-3 py-1 text-xs rounded-lg font-medium text-slate-600 hover:text-slate-900 flex items-center space-x-1">
+              <i data-lucide="list" class="w-3.5 h-3.5"></i>
+              <span>Table</span>
+            </button>
+          </div>
+          <button onclick="resetFilters()" class="text-xs text-slate-500 hover:text-slate-800 px-2 py-1">Reset</button>
+        </div>
+      </div>
+
+      <div id="kanban-container" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 overflow-x-auto pb-4">
+        <!-- New Request Column -->
+        <div class="bg-slate-100/80 p-3 rounded-2xl flex flex-col max-h-[750px]">
+          <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-200">
+            <div class="flex items-center space-x-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700">New Request</h4>
+            </div>
+            <span id="col-count-new" class="text-xs font-semibold px-2 py-0.5 bg-white rounded-full text-slate-600 border border-slate-200">0</span>
+          </div>
+          <div id="col-new" class="space-y-3 overflow-y-auto flex-1 pr-1"></div>
+        </div>
+
+        <!-- Approval Pending Column -->
+        <div class="bg-slate-100/80 p-3 rounded-2xl flex flex-col max-h-[750px]">
+          <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-200">
+            <div class="flex items-center space-x-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700">In Approval</h4>
+            </div>
+            <span id="col-count-approval" class="text-xs font-semibold px-2 py-0.5 bg-white rounded-full text-slate-600 border border-slate-200">0</span>
+          </div>
+          <div id="col-approval" class="space-y-3 overflow-y-auto flex-1 pr-1"></div>
+        </div>
+
+        <!-- Approved Column -->
+        <div class="bg-slate-100/80 p-3 rounded-2xl flex flex-col max-h-[750px]">
+          <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-200">
+            <div class="flex items-center space-x-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700">Approved</h4>
+            </div>
+            <span id="col-count-approved" class="text-xs font-semibold px-2 py-0.5 bg-white rounded-full text-slate-600 border border-slate-200">0</span>
+          </div>
+          <div id="col-approved" class="space-y-3 overflow-y-auto flex-1 pr-1"></div>
+        </div>
+
+        <!-- Ordered & In Transit Column -->
+        <div class="bg-slate-100/80 p-3 rounded-2xl flex flex-col max-h-[750px]">
+          <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-200">
+            <div class="flex items-center space-x-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span>
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700">Ordered / Transit</h4>
+            </div>
+            <span id="col-count-ordered" class="text-xs font-semibold px-2 py-0.5 bg-white rounded-full text-slate-600 border border-slate-200">0</span>
+          </div>
+          <div id="col-ordered" class="space-y-3 overflow-y-auto flex-1 pr-1"></div>
+        </div>
+
+        <!-- Fulfilled & Closed Column -->
+        <div class="bg-slate-100/80 p-3 rounded-2xl flex flex-col max-h-[750px]">
+          <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-200">
+            <div class="flex items-center space-x-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-slate-500"></span>
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700">Fulfilled / Closed</h4>
+            </div>
+            <span id="col-count-closed" class="text-xs font-semibold px-2 py-0.5 bg-white rounded-full text-slate-600 border border-slate-200">0</span>
+          </div>
+          <div id="col-closed" class="space-y-3 overflow-y-auto flex-1 pr-1"></div>
+        </div>
+      </div>
+
+      <div id="table-container" class="hidden bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase font-semibold">
+              <tr>
+                <th class="p-4">Ticket</th>
+                <th class="p-4">Requester</th>
+                <th class="p-4">Item & Justification</th>
+                <th class="p-4">Category</th>
+                <th class="p-4">Cost Est.</th>
+                <th class="p-4">Approvals</th>
+                <th class="p-4">Status</th>
+                <th class="p-4 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody id="tickets-table-body" class="divide-y divide-slate-100 text-slate-700"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= VIEW 2: EMPLOYEE SELF-SERVICE PORTAL ================= -->
+    <section id="view-portal" class="hidden space-y-6">
+      <div class="bg-gradient-to-r from-brand-700 via-indigo-700 to-brand-800 rounded-3xl p-6 sm:p-8 text-white shadow-lg">
+        <div class="max-w-2xl">
+          <div class="inline-flex items-center space-x-1.5 bg-white/10 px-3 py-1 rounded-full text-xs font-medium text-brand-100 mb-3 backdrop-blur-sm">
+            <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+            <span>Verified Company Portal</span>
+          </div>
+          <h2 class="text-2xl sm:text-3xl font-bold tracking-tight">Need new equipment or software?</h2>
+          <p class="text-brand-100 text-xs sm:text-sm mt-2 leading-relaxed">
+            Submit an IT purchase requisition or check the live fulfillment status of your pending hardware, peripherals, and SaaS licenses. You can also raise tickets directly by sending an email to <code class="bg-black/20 px-2 py-0.5 rounded text-amber-200">it-procure@company.com</code>.
+          </p>
+          <div class="mt-5 flex flex-wrap gap-3">
+            <button onclick="openNewTicketModal()" class="px-5 py-2.5 rounded-xl bg-white text-brand-800 font-semibold text-xs shadow-md hover:bg-brand-50 transition-all flex items-center space-x-2">
+              <i data-lucide="file-plus-2" class="w-4 h-4"></i>
+              <span>Create Purchase Requisition</span>
+            </button>
+            <button onclick="simulateSendUserEmail()" class="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium text-xs border border-white/20 transition-all flex items-center space-x-1.5">
+              <i data-lucide="mail-plus" class="w-4 h-4"></i>
+              <span>Simulate Sending Requisition via Gmail</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Employee My Requests & Live Status Tracking -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-base text-slate-800 flex items-center space-x-2">
+              <i data-lucide="clock-rewind" class="w-4 h-4 text-brand-600"></i>
+              <span>My Submitted Requisitions</span>
+            </h3>
+            <span class="text-xs text-slate-500">Filtered for: <strong class="text-slate-700">alex.turner@company.com</strong></span>
+          </div>
+          <div id="employee-tickets-list" class="space-y-3">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- Procurement Policy Quick Guide -->
+        <div class="space-y-4">
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <h4 class="font-bold text-sm text-slate-800 mb-3 flex items-center space-x-2">
+              <i data-lucide="book-open" class="w-4 h-4 text-indigo-600"></i>
+              <span>IT Purchasing Guidelines</span>
+            </h4>
+            <ul class="space-y-2.5 text-xs text-slate-600">
+              <li class="flex items-start space-x-2">
+                <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-500 mt-0.5 flex-shrink-0"></i>
+                <span><strong>Under $300:</strong> Direct IT Lead sign-off (Cables, Mice, Keyboards).</span>
+              </li>
+              <li class="flex items-start space-x-2">
+                <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-500 mt-0.5 flex-shrink-0"></i>
+                <span><strong>$300 to $1,500:</strong> Direct Manager + IT Lead sign-off (Monitors, standard hardware).</span>
+              </li>
+              <li class="flex items-start space-x-2">
+                <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-500 mt-0.5 flex-shrink-0"></i>
+                <span><strong>Above $1,500:</strong> Department VP + Finance Director approval required.</span>
+              </li>
+              <li class="flex items-start space-x-2">
+                <i data-lucide="clock" class="w-3.5 h-3.5 text-blue-500 mt-0.5 flex-shrink-0"></i>
+                <span>Hardware refresh cycle: 36 months for engineering, 48 months for others.</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="bg-amber-50 border border-amber-200/80 rounded-2xl p-4 text-amber-900 text-xs">
+            <div class="flex items-center space-x-2 font-bold mb-1">
+              <i data-lucide="alert-circle" class="w-4 h-4 text-amber-600"></i>
+              <span>Need Urgent Hardware Replacement?</span>
+            </div>
+            <p class="text-amber-800 text-[11px] leading-relaxed">
+              If your current machine has suffered catastrophic hardware failure, mark urgency as <strong>Urgent</strong> or flag it directly to the on-site Service Desk on Slack: <code>#it-support-help</code>.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= VIEW 3: GMAIL INBOUND & OUTBOUND SYNC SIMULATOR ================= -->
+    <section id="view-gmail" class="hidden space-y-6">
+      <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+        <div class="flex flex-col md:flex-row md:items-center justify-between pb-6 border-b border-slate-100 gap-4">
+          <div class="flex items-center space-x-4">
+            <div class="w-12 h-12 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center border border-red-100">
+              <i data-lucide="mail-question" class="w-6 h-6"></i>
+            </div>
+            <div>
+              <div class="flex items-center space-x-2">
+                <h3 class="text-lg font-bold text-slate-800">Gmail Inbound Webhook & Parser Simulator</h3>
+                <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800">OAuth 2.0 Connected</span>
+              </div>
+              <p class="text-xs text-slate-500 mt-0.5">Monitoring: <code class="font-mono text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded">it-procure@company.com</code> via Google Workspace Gmail API</p>
+            </div>
+          </div>
+          <div class="flex items-center space-x-2">
+            <button onclick="fetchSimulatedGmailEmails()" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold rounded-xl flex items-center space-x-1.5 shadow-sm">
+              <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+              <span>Poll Gmail Inbox Now</span>
+            </button>
+            <button onclick="openComposeGmailModal()" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-xl flex items-center space-x-1.5 shadow-sm">
+              <i data-lucide="send" class="w-3.5 h-3.5"></i>
+              <span>Simulate Send New Email</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- How it works flow banner -->
+        <div class="my-5 p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
+          <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Automated Architecture Pipeline</h4>
+          <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 text-center text-xs">
+            <div class="p-3 bg-white rounded-xl border border-slate-200">
+              <span class="text-brand-600 font-bold block mb-1">1. User Emails</span>
+              <p class="text-[11px] text-slate-500">Employee emails specs/links to it-procure@company.com</p>
+            </div>
+            <div class="p-3 bg-white rounded-xl border border-slate-200">
+              <span class="text-indigo-600 font-bold block mb-1">2. Cloud Webhook / Push</span>
+              <p class="text-[11px] text-slate-500">Google Cloud Pub/Sub triggers backend sync microservice</p>
+            </div>
+            <div class="p-3 bg-white rounded-xl border border-slate-200">
+              <span class="text-purple-600 font-bold block mb-1">3. NLP / Regex Parser</span>
+              <p class="text-[11px] text-slate-500">Auto-extracts vendor links, price estimate, department, urgency</p>
+            </div>
+            <div class="p-3 bg-white rounded-xl border border-slate-200">
+              <span class="text-emerald-600 font-bold block mb-1">4. Two-Way Threading</span>
+              <p class="text-[11px] text-slate-500">Ticket created; IT responses sent via Gmail SMTP with [IT-XXX] in header</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Simulated Gmail Inbox List -->
+        <h4 class="font-bold text-sm text-slate-800 mb-3 flex items-center justify-between">
+          <span>Incoming Simulated Emails in <code class="text-xs bg-slate-100 px-1 py-0.5 rounded">INBOX</code></span>
+          <span class="text-xs font-normal text-slate-500">Click any email below to test automatic parsing into ticket</span>
+        </h4>
+        <div id="simulated-gmail-threads" class="space-y-3">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= VIEW 4: DATABASE & SCHEMA ================= -->
+    <section id="view-db" class="hidden space-y-6">
+      <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+        <div class="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-slate-100 gap-3">
+          <div>
+            <h3 class="text-lg font-bold text-slate-800 flex items-center space-x-2">
+              <i data-lucide="database" class="w-5 h-5 text-emerald-600"></i>
+              <span>Production Relational Database Schema & Backend Architecture</span>
+            </h3>
+            <p class="text-xs text-slate-500 mt-0.5">PostgreSQL / MySQL compatible DDL, Foreign Key relationships, and Email threading design.</p>
+          </div>
+          <button onclick="copySqlSchema()" class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold flex items-center space-x-2 shadow-sm">
+            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+            <span id="copy-sql-btn-text">Copy Full SQL Script</span>
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+          <div class="lg:col-span-2 space-y-4">
+            <div class="flex items-center space-x-2">
+              <span class="px-2.5 py-1 rounded bg-slate-100 font-mono text-xs font-bold text-slate-700">schema.sql</span>
+              <span class="text-xs text-slate-400">Includes Indexes, Foreign Keys, Audit logs & Email headers</span>
+            </div>
+            <pre class="bg-slate-950 text-slate-200 p-4 rounded-2xl text-xs font-mono overflow-x-auto max-h-[500px] border border-slate-800 leading-relaxed" id="sql-code-block"><code>-- ========================================================
+-- IT-ProcureDesk: Production PostgreSQL / MySQL Schema
+-- ========================================================
+
+-- 1. TICKETS TABLE: Core Procurement Requisitions
+CREATE TABLE tickets (
+    id VARCHAR(32) PRIMARY KEY,                   -- e.g. 'IT-1042'
+    requester_name VARCHAR(150) NOT NULL,
+    requester_email VARCHAR(255) NOT NULL,
+    department VARCHAR(100) NOT NULL,
+    item_name VARCHAR(255) NOT NULL,
+    category VARCHAR(60) NOT NULL,                -- 'Laptop', 'Software', 'Monitor'
+    estimated_cost DECIMAL(12, 2) NOT NULL,
+    currency VARCHAR(3) DEFAULT 'USD',
+    justification TEXT NOT NULL,
+    vendor_link TEXT,
+    priority VARCHAR(20) DEFAULT 'Medium',        -- 'Low', 'Medium', 'High', 'Urgent'
+    status VARCHAR(30) DEFAULT 'New Request',     -- 'New Request', 'In Approval', 'Approved', 'Ordered', 'Fulfilled', 'Rejected'
+    assigned_to VARCHAR(150),
+    source VARCHAR(20) DEFAULT 'Portal',          -- 'Portal', 'Gmail', 'Slack'
+    
+    -- Gmail Inbound Threading Headers
+    gmail_message_id VARCHAR(255),               -- RFC 2822 Message-ID
+    gmail_thread_id VARCHAR(255),                -- Google Gmail Thread ID
+    
+    -- Procurement & Shipping info
+    po_number VARCHAR(50),
+    vendor_name VARCHAR(120),
+    tracking_number VARCHAR(100),
+    estimated_delivery DATE,
+    
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 2. APPROVALS TABLE: Multi-level Sign-offs
+CREATE TABLE ticket_approvals (
+    id SERIAL PRIMARY KEY,
+    ticket_id VARCHAR(32) REFERENCES tickets(id) ON DELETE CASCADE,
+    approval_type VARCHAR(50) NOT NULL,           -- 'Manager', 'Finance', 'Security_Infosec'
+    approver_email VARCHAR(255) NOT NULL,
+    status VARCHAR(20) DEFAULT 'Pending',         -- 'Pending', 'Approved', 'Rejected'
+    comments TEXT,
+    approved_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 3. COMMENTS & GMAIL THREAD LOGS TABLE
+CREATE TABLE ticket_comments (
+    id SERIAL PRIMARY KEY,
+    ticket_id VARCHAR(32) REFERENCES tickets(id) ON DELETE CASCADE,
+    author_name VARCHAR(150) NOT NULL,
+    author_email VARCHAR(255) NOT NULL,
+    is_internal_note BOOLEAN DEFAULT FALSE,       -- Internal IT only vs sent to user
+    is_email_reply BOOLEAN DEFAULT FALSE,         -- Sent via Gmail SMTP
+    content TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 4. ATTACHMENTS TABLE (Quotes, Invoices, Receipts)
+CREATE TABLE ticket_attachments (
+    id SERIAL PRIMARY KEY,
+    ticket_id VARCHAR(32) REFERENCES tickets(id) ON DELETE CASCADE,
+    file_name VARCHAR(255) NOT NULL,
+    file_size_kb INT NOT NULL,
+    storage_url TEXT NOT NULL,                    -- S3 or GCS Signed URL
+    uploaded_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 5. AUDIT LOGS FOR SOC2 / ISO27001 COMPLIANCE
+CREATE TABLE audit_logs (
+    id BIGSERIAL PRIMARY KEY,
+    ticket_id VARCHAR(32) REFERENCES tickets(id) ON DELETE CASCADE,
+    actor_email VARCHAR(255) NOT NULL,
+    action_type VARCHAR(100) NOT NULL,
+    old_value JSONB,
+    new_value JSONB,
+    timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Performance Indexes
+CREATE INDEX idx_tickets_status ON tickets(status);
+CREATE INDEX idx_tickets_requester ON tickets(requester_email);
+CREATE INDEX idx_tickets_gmail_thread ON tickets(gmail_thread_id);
+CREATE INDEX idx_approvals_ticket ON ticket_approvals(ticket_id);
+</code></pre>
+          </div>
+
+          <!-- Architecture & Setup Explanation -->
+          <div class="space-y-4">
+            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+              <h4 class="font-bold text-xs uppercase tracking-wider text-slate-700 mb-2">Gmail Integration Pattern</h4>
+              <p class="text-xs text-slate-600 leading-relaxed mb-3">
+                To connect your actual Google Workspace mailbox:
+              </p>
+              <ol class="space-y-2 text-xs text-slate-600 list-decimal list-inside">
+                <li>Create a <strong>Service Account</strong> or OAuth App in Google Cloud Console.</li>
+                <li>Enable <strong>Gmail API</strong> with scope <code>gmail.readonly</code> & <code>gmail.send</code>.</li>
+                <li>Subscribe via <strong>Gmail Push Notifications</strong> (`users.watch`) pushing to a Google Pub/Sub topic.</li>
+                <li>When incoming email hits `it-procure@company.com`, your webhook parses headers (Subject, From, In-Reply-To).</li>
+                <li>If Subject has <code>[IT-XXXX]</code>, append to existing ticket conversation; otherwise, create a new record.</li>
+              </ol>
+            </div>
+
+            <div class="bg-indigo-50 border border-indigo-200 p-4 rounded-2xl text-indigo-950 text-xs">
+              <div class="flex items-center space-x-2 font-bold mb-1">
+                <i data-lucide="code" class="w-4 h-4 text-indigo-600"></i>
+                <span>Sample Node.js Inbound Snippet</span>
+              </div>
+              <p class="text-[11px] text-indigo-900/80 mb-2">
+                Using <code>googleapis</code> npm package to fetch message payloads:
+              </p>
+              <pre class="bg-slate-900 text-emerald-400 p-2.5 rounded-lg text-[10px] font-mono overflow-x-auto"><code>const { google } = require('googleapis');
+const gmail = google.gmail({ version: 'v1', auth });
+
+const res = await gmail.users.messages.get({
+  userId: 'me',
+  id: messageId,
+  format: 'full'
+});
+// Parse headers: From, Subject, Date
+// Trigger DB insert with extracted specs</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= TICKET DETAILS & ACTION MODAL ================= -->
+  <div id="ticket-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-4xl w-full shadow-2xl border border-slate-200 overflow-hidden max-h-[92vh] flex flex-col my-auto animate-in fade-in zoom-in-95 duration-150">
+      
+      <!-- Modal Header -->
+      <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/70">
+        <div class="flex items-center space-x-3">
+          <span id="modal-ticket-badge" class="px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-brand-100 text-brand-800">IT-1001</span>
+          <div>
+            <h3 id="modal-ticket-title" class="font-bold text-base text-slate-800">MacBook Pro 16-inch M3 Max</h3>
+            <p id="modal-ticket-meta" class="text-xs text-slate-500">Requested by Alex Turner &bull; Engineering</p>
+          </div>
+        </div>
+        <button onclick="closeTicketModal()" class="w-8 h-8 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-200 flex items-center justify-center transition-colors">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-6 overflow-y-auto flex-1 space-y-6">
+
+        <!-- Top Status & Assignee Bar -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+          <div>
+            <label class="block text-[11px] uppercase font-bold text-slate-500 tracking-wider mb-1">Ticket Status</label>
+            <select id="modal-status-select" onchange="updateTicketStatusFromModal(this.value)" class="w-full text-xs font-semibold py-1.5 px-2.5 rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-brand-500/20 focus:outline-none">
+              <option value="New Request">New Request</option>
+              <option value="In Approval">In Approval</option>
+              <option value="Approved">Approved</option>
+              <option value="Ordered">Ordered / In-Transit</option>
+              <option value="Fulfilled">Fulfilled & Closed</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-[11px] uppercase font-bold text-slate-500 tracking-wider mb-1">Assigned IT Agent</label>
+            <select id="modal-assignee-select" onchange="updateTicketAssignee(this.value)" class="w-full text-xs py-1.5 px-2.5 rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-brand-500/20 focus:outline-none">
+              <option value="Unassigned">Unassigned</option>
+              <option value="David Miller (Lead Hardware)">David Miller (Lead Hardware)</option>
+              <option value="Sarah Jenkins (Procurement Mgr)">Sarah Jenkins (Procurement Mgr)</option>
+              <option value="Vikram Patel (IT Operations)">Vikram Patel (IT Operations)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-[11px] uppercase font-bold text-slate-500 tracking-wider mb-1">Priority</label>
+            <span id="modal-priority-badge" class="inline-block text-xs font-semibold px-2.5 py-1 rounded-lg">High</span>
+          </div>
+        </div>
+
+        <!-- Request Details Section -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="space-y-3 bg-white p-4 rounded-2xl border border-slate-200">
+            <h4 class="font-bold text-xs uppercase text-slate-500 tracking-wider flex items-center space-x-1.5">
+              <i data-lucide="info" class="w-4 h-4 text-brand-600"></i>
+              <span>Item & Specification Details</span>
+            </h4>
+            <div class="space-y-1.5 text-xs">
+              <div class="flex justify-between"><span class="text-slate-500">Category:</span> <span id="modal-category" class="font-medium text-slate-800">Laptop</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Estimated Cost:</span> <span id="modal-cost" class="font-bold text-emerald-600 text-sm">$3,499.00</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Inbound Channel:</span> <span id="modal-channel" class="font-medium text-slate-800">Gmail Sync</span></div>
+              <div>
+                <span class="text-slate-500 block mb-0.5">Vendor Link:</span>
+                <a id="modal-vendor-link" href="#" target="_blank" class="text-brand-600 hover:underline break-all block truncate font-medium">https://apple.com/shop/buy-mac/macbook-pro</a>
+              </div>
+            </div>
+            <div>
+              <span class="text-slate-500 text-xs block mb-1">Business Justification:</span>
+              <p id="modal-justification" class="text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-slate-700 leading-relaxed"></p>
+            </div>
+          </div>
+
+          <div class="space-y-3 bg-white p-4 rounded-2xl border border-slate-200">
+            <h4 class="font-bold text-xs uppercase text-slate-500 tracking-wider flex items-center space-x-1.5">
+              <i data-lucide="shield-check" class="w-4 h-4 text-indigo-600"></i>
+              <span>Two-Tier Approvals & Purchase Order</span>
+            </h4>
+
+            <div class="space-y-2.5 pt-1">
+              <!-- Manager Approval Toggle -->
+              <div class="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-200">
+                <div>
+                  <p class="text-xs font-semibold text-slate-800">1. Manager Sign-off</p>
+                  <p id="modal-mgr-status-label" class="text-[11px] text-slate-500">Department Head approval</p>
+                </div>
+                <button id="modal-btn-mgr-approve" onclick="toggleApproval('manager')" class="px-3 py-1 text-xs font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors">
+                  Approve
+                </button>
+              </div>
+
+              <!-- Finance Approval Toggle -->
+              <div class="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-200">
+                <div>
+                  <p class="text-xs font-semibold text-slate-800">2. Finance / Budget Clearance</p>
+                  <p id="modal-fin-status-label" class="text-[11px] text-slate-500">Required for items > $500</p>
+                </div>
+                <button id="modal-btn-fin-approve" onclick="toggleApproval('finance')" class="px-3 py-1 text-xs font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors">
+                  Approve
+                </button>
+              </div>
+
+              <!-- PO & Shipping Tracker Input -->
+              <div class="pt-2 border-t border-slate-100 space-y-2">
+                <p class="text-[11px] font-bold text-slate-600 uppercase">Vendor & Delivery Tracking</p>
+                <div class="grid grid-cols-2 gap-2">
+                  <input type="text" id="modal-input-po" placeholder="PO Number (e.g. PO-8921)" class="text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 focus:outline-none focus:border-brand-500">
+                  <input type="text" id="modal-input-vendor" placeholder="Vendor (e.g. Dell / Amazon)" class="text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 focus:outline-none focus:border-brand-500">
+                </div>
+                <div class="flex space-x-2">
+                  <input type="text" id="modal-input-tracking" placeholder="Tracking # or Link" class="text-xs flex-1 px-2.5 py-1.5 rounded-lg border border-slate-200 focus:outline-none focus:border-brand-500">
+                  <button onclick="saveLogisticsDetails()" class="px-3 py-1.5 bg-slate-800 text-white text-xs font-medium rounded-lg hover:bg-slate-900 transition-colors">Save Logistics</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+            <h4 class="font-bold text-xs uppercase text-slate-600 tracking-wider flex items-center space-x-1.5">
+              <i data-lucide="message-square" class="w-4 h-4 text-brand-600"></i>
+              <span>Threaded Activity & Requester Communications</span>
+            </h4>
+            <span class="text-[11px] text-slate-400">Replies will be emailed back to requester via Gmail SMTP</span>
+          </div>
+
+          <!-- Comment list -->
+          <div id="modal-comments-list" class="space-y-2.5 max-h-52 overflow-y-auto pr-1"></div>
+
+          <!-- Add comment / reply -->
+          <div class="pt-2">
+            <div class="flex items-center space-x-2 mb-2">
+              <label class="flex items-center space-x-1.5 text-xs text-slate-600 cursor-pointer">
+                <input type="radio" name="comment_type" id="type-reply" value="reply" checked class="text-brand-600 focus:ring-brand-500">
+                <span class="font-medium text-slate-800">Email Requester (Gmail Sync)</span>
+              </label>
+              <label class="flex items-center space-x-1.5 text-xs text-slate-600 cursor-pointer ml-3">
+                <input type="radio" name="comment_type" id="type-internal" value="internal" class="text-brand-600 focus:ring-brand-500">
+                <span class="font-medium text-amber-700">Internal IT Note Only</span>
+              </label>
+            </div>
+            <div class="flex space-x-2">
+              <textarea id="modal-comment-input" rows="2" placeholder="Write a note or compose response to employee..." class="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"></textarea>
+              <button onclick="submitModalComment()" class="px-4 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-semibold flex items-center justify-center shadow-sm">
+                <i data-lucide="send" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="px-6 py-3 bg-slate-50 border-t border-slate-200 flex justify-between items-center text-xs">
+        <span class="text-slate-400">Ticket changes are logged with full audit trail</span>
+        <button onclick="closeTicketModal()" class="px-4 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold transition-colors">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= NEW TICKET MODAL ================= -->
+  <div id="new-ticket-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-xl w-full shadow-2xl border border-slate-200 overflow-hidden max-h-[92vh] flex flex-col my-auto">
+      <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+        <div class="flex items-center space-x-2">
+          <div class="w-8 h-8 rounded-lg bg-brand-100 text-brand-700 flex items-center justify-center">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i>
+          </div>
+          <h3 class="font-bold text-sm text-slate-800">New IT Purchase Requisition</h3>
+        </div>
+        <button onclick="closeNewTicketModal()" class="text-slate-400 hover:text-slate-700">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="new-ticket-form" onsubmit="handleNewTicketSubmit(event)" class="p-6 overflow-y-auto space-y-4 text-xs">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Your Full Name *</label>
+            <input type="text" id="form-requester-name" required placeholder="e.g. Rachel Adams" class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Corporate Email *</label>
+            <input type="email" id="form-requester-email" required placeholder="name@company.com" class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Department *</label>
+            <select id="form-department" required class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20">
+              <option value="Engineering">Engineering</option>
+              <option value="Design">Design</option>
+              <option value="Marketing">Marketing</option>
+              <option value="Sales">Sales</option>
+              <option value="HR / Ops">HR / Ops</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Category *</label>
+            <select id="form-category" required class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20">
+              <option value="Laptop / Workstation">Laptop / Workstation</option>
+              <option value="Monitors & Displays">Monitors & Displays</option>
+              <option value="Peripherals">Peripherals (Keyboard, Headset, Dock)</option>
+              <option value="Software License">Software / SaaS License</option>
+              <option value="Cloud / SaaS">Cloud / Server Resource</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Item Title & Specifications *</label>
+          <input type="text" id="form-item-name" required placeholder="e.g. Dell UltraSharp 32-inch 4K USB-C Hub Monitor (U3223QE)" class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Estimated Cost (USD $) *</label>
+            <input type="number" step="0.01" id="form-cost" required placeholder="799.00" class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Priority Level</label>
+            <select id="form-priority" class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20">
+              <option value="Low">Low (Standard replenishment)</option>
+              <option value="Medium" selected>Medium (Standard request)</option>
+              <option value="High">High (Immediate work blocked)</option>
+              <option value="Urgent">Urgent (Broken primary hardware)</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Vendor or Product Link</label>
+          <input type="url" id="form-vendor-link" placeholder="https://dell.com/... or https://amazon.com/..." class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20">
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Business Justification *</label>
+          <textarea id="form-justification" required rows="3" placeholder="Explain why this equipment is needed for your role, project, or client delivery..." class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20"></textarea>
+        </div>
+
+        <div class="pt-2 flex justify-end space-x-2">
+          <button type="button" onclick="closeNewTicketModal()" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold">Cancel</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold shadow-sm">Submit Requisition</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= SIMULATE GMAIL COMPOSE MODAL ================= -->
+  <div id="compose-gmail-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden my-auto">
+      <div class="px-5 py-3.5 bg-slate-800 text-white flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <i data-lucide="mail" class="w-4 h-4 text-red-400"></i>
+          <span class="text-xs font-bold">New Gmail Message &rarr; it-procure@company.com</span>
+        </div>
+        <button onclick="closeComposeGmailModal()" class="text-slate-400 hover:text-white">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="p-5 space-y-3 text-xs">
+        <div>
+          <label class="block text-slate-500 text-[11px] mb-0.5">From:</label>
+          <input type="email" id="sim-from" value="elena.rostova@company.com" class="w-full px-3 py-1.5 rounded-lg border border-slate-200 font-medium">
+        </div>
+        <div>
+          <label class="block text-slate-500 text-[11px] mb-0.5">Subject:</label>
+          <input type="text" id="sim-subject" value="Hardware Requisition: Ergonomic Mechanical Keyboard & Mouse" class="w-full px-3 py-1.5 rounded-lg border border-slate-200 font-medium">
+        </div>
+        <div>
+          <label class="block text-slate-500 text-[11px] mb-0.5">Body text (Simulate employee email request):</label>
+          <textarea id="sim-body" rows="4" class="w-full p-2.5 rounded-lg border border-slate-200 font-mono text-[11px] leading-relaxed">Hi IT Team,
+
+I'd like to request a Keychron Q1 Pro wireless mechanical keyboard ($199) and Logitech MX Master 3S mouse ($99). Total estimated budget: $298.
+Department: Design Team.
+Link: https://keychron.com/q1-pro
+Reason: Repetitive wrist strain from standard issue keyboard.
+
+Thanks,
+Elena</textarea>
+        </div>
+        <p class="text-[11px] text-slate-400">
+          The email parser will automatically read the estimated cost ($298), department, item name, and vendor link to generate a ticket.
+        </p>
+        <div class="pt-2 flex justify-end space-x-2">
+          <button onclick="closeComposeGmailModal()" class="px-3.5 py-1.5 rounded-lg bg-slate-100 text-slate-700 font-semibold">Cancel</button>
+          <button onclick="dispatchSimulatedGmail()" class="px-4 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold flex items-center space-x-1.5">
+            <i data-lucide="send" class="w-3.5 h-3.5"></i>
+            <span>Send to it-procure@</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+  <script>
+    // --- 1. Audio UI Feedback Helper (Tone.js) ---
+    function playNotificationSound(type = 'success') {
+      try {
+        if (typeof Tone !== 'undefined') {
+          const synth = new Tone.Synth().toDestination();
+          synth.volume.value = -16;
+          if (type === 'success') {
+            synth.triggerAttackRelease("C5", "8n");
+            setTimeout(() => synth.triggerAttackRelease("G5", "8n"), 100);
+          } else if (type === 'click') {
+            synth.triggerAttackRelease("A4", "32n");
+          }
+        }
+      } catch (e) {
+        // Fallback silently if audio context is blocked
+      }
+    }
+
+    // --- 2. In-Memory Master Database with Realistic Sample IT Purchase Tickets ---
+    let tickets = [
+      {
+        id: 'IT-1021',
+        requester_name: 'Alex Turner',
+        requester_email: 'alex.turner@company.com',
+        department: 'Engineering',
+        item_name: 'Apple MacBook Pro 16" M3 Max (36GB RAM, 1TB SSD)',
+        category: 'Laptop / Workstation',
+        estimated_cost: 3499.00,
+        currency: 'USD',
+        justification: 'Running Docker microservices locally and building iOS/Android native client releases. Current 2020 Intel MBP experiences frequent thermal throttling.',
+        vendor_link: 'https://apple.com/shop/buy-mac/macbook-pro/16-inch',
+        priority: 'High',
+        status: 'In Approval',
+        assigned_to: 'David Miller (Lead Hardware)',
+        source: 'Gmail',
+        created_at: '2026-10-01T09:30:00Z',
+        approvals: {
+          manager: { approved: true, by: 'sarah.vp.eng@company.com', at: '2026-10-01T11:20:00Z' },
+          finance: { approved: false, by: null, at: null }
+        },
+        po_number: '',
+        vendor_name: 'Apple Enterprise Direct',
+        tracking_number: '',
+        estimated_delivery: '',
+        comments: [
+          { author: 'System Inbound', email: 'it-procure@company.com', is_internal: false, is_reply: false, content: 'Ticket auto-created from inbound email: "Requisition: High-perf dev laptop for Alex Turner"', time: '2026-10-01 09:30' },
+          { author: 'Sarah VP Eng', email: 'sarah.vp.eng@company.com', is_internal: true, is_reply: false, content: 'Manager sign-off granted. Alex is lead on the core pipeline revamp.', time: '2026-10-01 11:20' }
+        ]
+      },
+      {
+        id: 'IT-1022',
+        requester_name: 'Marcus Vance',
+        requester_email: 'marcus.v@company.com',
+        department: 'Design',
+        item_name: 'Dell UltraSharp 32" 4K Video Editing Monitor (U3223QE)',
+        category: 'Monitors & Displays',
+        estimated_cost: 829.00,
+        currency: 'USD',
+        justification: 'Color calibration needed for 2026 product rebrand and UI design system rollout.',
+        vendor_link: 'https://dell.com/en-us/shop/monitors/u3223qe',
+        priority: 'Medium',
+        status: 'Approved',
+        assigned_to: 'Sarah Jenkins (Procurement Mgr)',
+        source: 'Portal',
+        created_at: '2026-09-29T14:15:00Z',
+        approvals: {
+          manager: { approved: true, by: 'claire.design.dir@company.com', at: '2026-09-29T16:00:00Z' },
+          finance: { approved: true, by: 'finance-approvals@company.com', at: '2026-09-30T10:15:00Z' }
+        },
+        po_number: 'PO-99120',
+        vendor_name: 'B&H Photo Video',
+        tracking_number: '',
+        estimated_delivery: '',
+        comments: [
+          { author: 'Sarah Jenkins', email: 'sarah.j@company.com', is_internal: false, is_reply: true, content: 'Approved! Generating Purchase Order with corporate vendor account today.', time: '2026-09-30 11:00' }
+        ]
+      },
+      {
+        id: 'IT-1023',
+        requester_name: 'Priya Sharma',
+        requester_email: 'priya.sharma@company.com',
+        department: 'Sales',
+        item_name: 'Jabra Evolve2 75 Wireless ANC Headset',
+        category: 'Peripherals',
+        estimated_cost: 299.00,
+        currency: 'USD',
+        justification: 'Handling 30+ daily prospect demo calls. Noise cancellation essential for open office floor.',
+        vendor_link: 'https://jabra.com/business/office-headsets',
+        priority: 'Low',
+        status: 'Ordered',
+        assigned_to: 'Vikram Patel (IT Operations)',
+        source: 'Gmail',
+        created_at: '2026-09-28T10:00:00Z',
+        approvals: {
+          manager: { approved: true, by: 'sales-lead@company.com', at: '2026-09-28T10:30:00Z' },
+          finance: { approved: true, by: 'auto-low-value-rule', at: '2026-09-28T10:30:00Z' }
+        },
+        po_number: 'PO-98441',
+        vendor_name: 'Amazon Business',
+        tracking_number: '1Z9999999999999999',
+        estimated_delivery: '2026-10-04',
+        comments: [
+          { author: 'Vikram Patel', email: 'vikram.p@company.com', is_internal: false, is_reply: true, content: 'Order placed via Amazon Prime. Estimated delivery to office reception on Friday.', time: '2026-09-28 15:45' }
+        ]
+      },
+      {
+        id: 'IT-1024',
+        requester_name: 'Liam Chen',
+        requester_email: 'liam.chen@company.com',
+        department: 'Engineering',
+        item_name: 'JetBrains All Products Pack (1-Year Team License)',
+        category: 'Software License',
+        estimated_cost: 779.00,
+        currency: 'USD',
+        justification: 'Required for Rust and Go backend development toolchain.',
+        vendor_link: 'https://jetbrains.com/all',
+        priority: 'Medium',
+        status: 'Fulfilled',
+        assigned_to: 'Vikram Patel (IT Operations)',
+        source: 'Portal',
+        created_at: '2026-09-25T08:00:00Z',
+        approvals: {
+          manager: { approved: true, by: 'engineering-director@company.com', at: '2026-09-25T09:00:00Z' },
+          finance: { approved: true, by: 'finance@company.com', at: '2026-09-25T11:00:00Z' }
+        },
+        po_number: 'LIC-JB-4421',
+        vendor_name: 'JetBrains Americas Inc.',
+        tracking_number: 'N/A (Digital Delivery)',
+        estimated_delivery: '2026-09-25',
+        comments: [
+          { author: 'Vikram Patel', email: 'vikram.p@company.com', is_internal: false, is_reply: true, content: 'License key assigned to your corporate SSO email. You can activate directly.', time: '2026-09-25 14:00' }
+        ]
+      },
+      {
+        id: 'IT-1025',
+        requester_name: 'Nora Higgins',
+        requester_email: 'nora.h@company.com',
+        department: 'Marketing',
+        item_name: 'Sony A7 IV Camera Kit + 24-70mm Lens (Podcast & Promo Video)',
+        category: 'Peripherals',
+        estimated_cost: 2698.00,
+        currency: 'USD',
+        justification: 'In-house video recording for Q4 product launches and executive thought-leadership interviews.',
+        vendor_link: 'https://bhphotovideo.com/c/product/sony-a7iv',
+        priority: 'Urgent',
+        status: 'New Request',
+        assigned_to: 'Unassigned',
+        source: 'Gmail',
+        created_at: '2026-10-02T08:15:00Z',
+        approvals: {
+          manager: { approved: false, by: null, at: null },
+          finance: { approved: false, by: null, at: null }
+        },
+        po_number: '',
+        vendor_name: '',
+        tracking_number: '',
+        estimated_delivery: '',
+        comments: [
+          { author: 'System Inbound', email: 'it-procure@company.com', is_internal: false, is_reply: false, content: 'Email received from nora.h@company.com subject: "Urgent purchase: Studio video gear for summit"', time: '2026-10-02 08:15' }
+        ]
+      }
+    ];
+
+    // --- 3. Simulated Inbound Gmail Mailbox Buffer ---
+    let simulatedGmailInbox = [
+      {
+        msgId: 'msg-gmail-88192',
+        fromName: 'Jessica Wu',
+        fromEmail: 'jessica.wu@company.com',
+        dept: 'Engineering',
+        subject: 'Requisition: CalDigit TS4 Thunderbolt 4 Docking Station',
+        snippet: 'Requesting CalDigit TS4 dock for dual 4K display output. Price is $399 on Amazon. My manager has already verbally approved.',
+        estCost: 399.00,
+        category: 'Peripherals',
+        link: 'https://amazon.com/caldigit-ts4',
+        receivedTime: '10 mins ago',
+        urgency: 'Medium',
+        convertedTicketId: null
+      },
+      {
+        msgId: 'msg-gmail-88193',
+        fromName: 'Carlos Gomez',
+        fromEmail: 'carlos.g@company.com',
+        dept: 'Sales',
+        subject: 'URGENT: Replacement Lenovo ThinkPad Charger (Lost in Airport)',
+        snippet: 'I lost my 100W USB-C Lenovo power brick during transit for the client conference. Need an overnight replacement dispatched to Chicago office.',
+        estCost: 85.00,
+        category: 'Peripherals',
+        link: 'https://lenovo.com/accessories/power',
+        receivedTime: '35 mins ago',
+        urgency: 'Urgent',
+        convertedTicketId: null
+      }
+    ];
+
+    let currentLayout = 'kanban'; // 'kanban' or 'table'
+    let selectedTicketId = null;
+
+    // --- STREAMING_CHUNK:View Switching Logic ---
+    function switchView(viewName) {
+      playNotificationSound('click');
+      const views = ['staff', 'portal', 'gmail', 'db'];
+      views.forEach(v => {
+        document.getElementById(`view-${v}`).classList.add('hidden');
+        const btn = document.getElementById(`nav-${v}-btn`);
+        if (btn) {
+          btn.classList.remove('bg-white', 'text-brand-700', 'shadow-sm');
+          btn.classList.add('text-slate-600');
+        }
+      });
+
+      const activeView = document.getElementById(`view-${viewName}`);
+      if (activeView) activeView.classList.remove('hidden');
+
+      const activeBtn = document.getElementById(`nav-${viewName}-btn`);
+      if (activeBtn) {
+        activeBtn.classList.add('bg-white', 'text-brand-700', 'shadow-sm');
+        activeBtn.classList.remove('text-slate-600');
+      }
+
+      if (viewName === 'staff') {
+        renderBoard();
+      } else if (viewName === 'portal') {
+        renderEmployeePortal();
+      } else if (viewName === 'gmail') {
+        renderGmailInbox();
+      }
+
+      lucide.createIcons();
+    }
+
+    // --- STREAMING_CHUNK:Rendering Kanban Board & Table View ---
+    function renderBoard() {
+      const searchTerm = document.getElementById('staff-search-input').value.toLowerCase();
+      const deptFilter = document.getElementById('staff-filter-dept').value;
+      const catFilter = document.getElementById('staff-filter-cat').value;
+
+      // Filter tickets
+      const filtered = tickets.filter(t => {
+        const matchesSearch = t.id.toLowerCase().includes(searchTerm) ||
+                              t.requester_name.toLowerCase().includes(searchTerm) ||
+                              t.item_name.toLowerCase().includes(searchTerm) ||
+                              t.requester_email.toLowerCase().includes(searchTerm);
+        const matchesDept = (deptFilter === 'all' || t.department === deptFilter);
+        const matchesCat = (catFilter === 'all' || t.category === catFilter);
+        return matchesSearch && matchesDept && matchesCat;
+      });
+
+      // Update stat cards
+      document.getElementById('stat-total').innerText = tickets.length;
+      const pendingCount = tickets.filter(t => !t.approvals.manager.approved || !t.approvals.finance.approved).length;
+      document.getElementById('stat-pending').innerText = pendingCount;
+      const approvedSpend = tickets
+        .filter(t => t.status === 'Approved' || t.status === 'Ordered' || t.status === 'Fulfilled')
+        .reduce((sum, t) => sum + t.estimated_cost, 0);
+      document.getElementById('stat-spend').innerText = '$' + approvedSpend.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
+      // Kanban Columns
+      const colMap = {
+        'New Request': document.getElementById('col-new'),
+        'In Approval': document.getElementById('col-approval'),
+        'Approved': document.getElementById('col-approved'),
+        'Ordered': document.getElementById('col-ordered'),
+        'Fulfilled': document.getElementById('col-closed'),
+        'Rejected': document.getElementById('col-closed')
+      };
+
+      // Reset inner HTML
+      Object.values(colMap).forEach(col => col.innerHTML = '');
+
+      const counts = {
+        'New Request': 0,
+        'In Approval': 0,
+        'Approved': 0,
+        'Ordered': 0,
+        'Fulfilled': 0
+      };
+
+      // Populate cards
+      filtered.forEach(ticket => {
+        let bucket = ticket.status;
+        if (bucket === 'Rejected') bucket = 'Fulfilled';
+        if (counts[bucket] !== undefined) counts[bucket]++;
+
+        const targetCol = colMap[bucket] || colMap['New Request'];
+        const card = createKanbanCard(ticket);
+        targetCol.appendChild(card);
+      });
+
+      // Update column badges
+      document.getElementById('col-count-new').innerText = counts['New Request'];
+      document.getElementById('col-count-approval').innerText = counts['In Approval'];
+      document.getElementById('col-count-approved').innerText = counts['Approved'];
+      document.getElementById('col-count-ordered').innerText = counts['Ordered'];
+      document.getElementById('col-count-closed').innerText = counts['Fulfilled'];
+
+      // Populate Table view
+      renderTableView(filtered);
+      lucide.createIcons();
+    }
+
+    function createKanbanCard(ticket) {
+      const card = document.createElement('div');
+      card.className = "bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-sm hover:shadow-md hover:border-brand-300 transition-all cursor-pointer group";
+      card.onclick = () => openTicketModal(ticket.id);
+
+      // Priority color pill
+      let priorityClass = 'bg-slate-100 text-slate-700';
+      if (ticket.priority === 'Urgent') priorityClass = 'bg-red-100 text-red-700 font-bold';
+      else if (ticket.priority === 'High') priorityClass = 'bg-amber-100 text-amber-800 font-semibold';
+      else if (ticket.priority === 'Medium') priorityClass = 'bg-blue-100 text-blue-700';
+
+      // Approval summary pill
+      const mgrDone = ticket.approvals.manager.approved;
+      const finDone = ticket.approvals.finance.approved;
+
+      card.innerHTML = `
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-[11px] font-mono font-bold text-slate-500 group-hover:text-brand-600 transition-colors">${ticket.id}</span>
+          <div class="flex items-center space-x-1">
+            ${ticket.source === 'Gmail' ? '<span title="Received via Gmail sync" class="text-red-500 text-[10px] bg-red-50 px-1.5 py-0.5 rounded flex items-center gap-0.5"><i data-lucide="mail" class="w-3 h-3"></i> Gmail</span>' : ''}
+            <span class="text-[10px] px-2 py-0.5 rounded-md ${priorityClass}">${ticket.priority}</span>
+          </div>
+        </div>
+
+        <h5 class="text-xs font-bold text-slate-800 leading-snug line-clamp-2 mb-1.5">${ticket.item_name}</h5>
+
+        <div class="text-[11px] text-slate-500 mb-2 flex items-center justify-between">
+          <span>${ticket.requester_name}</span>
+          <span class="font-medium text-slate-600">${ticket.department}</span>
+        </div>
+
+        <div class="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
+          <span class="font-bold text-emerald-600">$${ticket.estimated_cost.toLocaleString()}</span>
+          <div class="flex items-center space-x-1.5" title="Approvals: Mgr / Finance">
+            <span class="w-2 h-2 rounded-full ${mgrDone ? 'bg-emerald-500' : 'bg-slate-300'}" title="Manager sign-off"></span>
+            <span class="w-2 h-2 rounded-full ${finDone ? 'bg-emerald-500' : 'bg-slate-300'}" title="Finance sign-off"></span>
+          </div>
+        </div>
+      `;
+      return card;
+    }
+
+    // --- STREAMING_CHUNK:Table Layout Render ---
+    function renderTableView(ticketList) {
+      const tbody = document.getElementById('tickets-table-body');
+      tbody.innerHTML = '';
+
+      if (ticketList.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-slate-400">No tickets match the selected filters.</td></tr>`;
+        return;
+      }
+
+      ticketList.forEach(t => {
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 transition-colors border-b border-slate-100 cursor-pointer";
+        tr.onclick = (e) => {
+          if (!e.target.closest('button')) openTicketModal(t.id);
+        };
+
+        const mgrDone = t.approvals.manager.approved;
+        const finDone = t.approvals.finance.approved;
+
+        tr.innerHTML = `
+          <td class="p-4 font-mono font-bold text-brand-600">${t.id}</td>
+          <td class="p-4">
+            <div class="font-medium text-slate-800">${t.requester_name}</div>
+            <div class="text-[11px] text-slate-400">${t.department}</div>
+          </td>
+          <td class="p-4 max-w-xs">
+            <div class="font-medium text-slate-800 truncate">${t.item_name}</div>
+            <div class="text-[11px] text-slate-500 truncate">${t.justification}</div>
+          </td>
+          <td class="p-4"><span class="px-2 py-0.5 bg-slate-100 rounded text-slate-600 text-[11px]">${t.category}</span></td>
+          <td class="p-4 font-bold text-emerald-600">$${t.estimated_cost.toLocaleString()}</td>
+          <td class="p-4">
+            <div class="flex items-center space-x-2 text-[11px]">
+              <span class="px-1.5 py-0.5 rounded ${mgrDone ? 'bg-emerald-100 text-emerald-800 font-semibold' : 'bg-slate-100 text-slate-500'}">Mgr</span>
+              <span class="px-1.5 py-0.5 rounded ${finDone ? 'bg-emerald-100 text-emerald-800 font-semibold' : 'bg-slate-100 text-slate-500'}">Fin</span>
+            </div>
+          </td>
+          <td class="p-4">
+            <span class="px-2 py-1 rounded-lg text-[11px] font-semibold ${getStatusBadgeClass(t.status)}">${t.status}</span>
+          </td>
+          <td class="p-4 text-right">
+            <button onclick="openTicketModal('${t.id}')" class="px-2.5 py-1 text-xs rounded-lg border border-slate-200 hover:bg-white hover:text-brand-600 font-medium">View</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function getStatusBadgeClass(status) {
+      switch (status) {
+        case 'New Request': return 'bg-blue-100 text-blue-800';
+        case 'In Approval': return 'bg-amber-100 text-amber-800';
+        case 'Approved': return 'bg-emerald-100 text-emerald-800';
+        case 'Ordered': return 'bg-purple-100 text-purple-800';
+        case 'Fulfilled': return 'bg-slate-100 text-slate-700';
+        case 'Rejected': return 'bg-red-100 text-red-700';
+        default: return 'bg-slate-100 text-slate-700';
+      }
+    }
+
+    function setBoardLayout(mode) {
+      currentLayout = mode;
+      const kanbanBtn = document.getElementById('layout-kanban-btn');
+      const tableBtn = document.getElementById('layout-table-btn');
+      const kanbanContainer = document.getElementById('kanban-container');
+      const tableContainer = document.getElementById('table-container');
+
+      if (mode === 'kanban') {
+        kanbanContainer.classList.remove('hidden');
+        tableContainer.classList.add('hidden');
+        kanbanBtn.className = "px-3 py-1 text-xs rounded-lg font-medium bg-white text-brand-700 shadow-sm flex items-center space-x-1";
+        tableBtn.className = "px-3 py-1 text-xs rounded-lg font-medium text-slate-600 hover:text-slate-900 flex items-center space-x-1";
+      } else {
+        kanbanContainer.classList.add('hidden');
+        tableContainer.classList.remove('hidden');
+        tableBtn.className = "px-3 py-1 text-xs rounded-lg font-medium bg-white text-brand-700 shadow-sm flex items-center space-x-1";
+        kanbanBtn.className = "px-3 py-1 text-xs rounded-lg font-medium text-slate-600 hover:text-slate-900 flex items-center space-x-1";
+      }
+      lucide.createIcons();
+    }
+
+    function resetFilters() {
+      document.getElementById('staff-search-input').value = '';
+      document.getElementById('staff-filter-dept').value = 'all';
+      document.getElementById('staff-filter-cat').value = 'all';
+      renderBoard();
+      showToast('Filters cleared', 'info');
+    }
+
+    // --- STREAMING_CHUNK:Employee Self-Service Portal Render ---
+    function renderEmployeePortal() {
+      const listContainer = document.getElementById('employee-tickets-list');
+      listContainer.innerHTML = '';
+
+      // Mock user context: Alex Turner (plus any new user requests created in session)
+      const alexTickets = tickets.filter(t => t.requester_email === 'alex.turner@company.com' || t.source === 'Portal');
+
+      if (alexTickets.length === 0) {
+        listContainer.innerHTML = `<div class="p-6 bg-white rounded-2xl border border-slate-200 text-center text-slate-400 text-xs">No active requests logged under your profile.</div>`;
+        return;
+      }
+
+      alexTickets.forEach(ticket => {
+        const item = document.createElement('div');
+        item.className = "bg-white p-4 rounded-2xl border border-slate-200 shadow-sm hover:border-brand-300 transition-all";
+
+        let stepIndex = 1;
+        if (ticket.status === 'In Approval') stepIndex = 2;
+        if (ticket.status === 'Approved') stepIndex = 3;
+        if (ticket.status === 'Ordered') stepIndex = 4;
+        if (ticket.status === 'Fulfilled') stepIndex = 5;
+
+        item.innerHTML = `
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-2">
+            <div>
+              <div class="flex items-center space-x-2">
+                <span class="font-mono text-xs font-bold text-brand-600">${ticket.id}</span>
+                <span class="text-xs font-semibold text-slate-800">${ticket.item_name}</span>
+              </div>
+              <p class="text-[11px] text-slate-500 mt-0.5">Submitted on ${ticket.created_at.slice(0, 10)} &bull; Cost: $${ticket.estimated_cost.toLocaleString()}</p>
+            </div>
+            <span class="px-2.5 py-1 rounded-full text-xs font-semibold self-start sm:self-auto ${getStatusBadgeClass(ticket.status)}">${ticket.status}</span>
+          </div>
+
+          <!-- Progress Stepper -->
+          <div class="py-4">
+            <div class="grid grid-cols-4 gap-2 text-center text-[10px]">
+              <div class="space-y-1">
+                <div class="h-1.5 rounded-full ${stepIndex >= 1 ? 'bg-brand-600' : 'bg-slate-200'}"></div>
+                <span class="${stepIndex >= 1 ? 'text-brand-700 font-bold' : 'text-slate-400'}">1. Submitted</span>
+              </div>
+              <div class="space-y-1">
+                <div class="h-1.5 rounded-full ${stepIndex >= 2 ? 'bg-brand-600' : 'bg-slate-200'}"></div>
+                <span class="${stepIndex >= 2 ? 'text-brand-700 font-bold' : 'text-slate-400'}">2. Approval</span>
+              </div>
+              <div class="space-y-1">
+                <div class="h-1.5 rounded-full ${stepIndex >= 4 ? 'bg-brand-600' : 'bg-slate-200'}"></div>
+                <span class="${stepIndex >= 4 ? 'text-brand-700 font-bold' : 'text-slate-400'}">3. Order & Dispatch</span>
+              </div>
+              <div class="space-y-1">
+                <div class="h-1.5 rounded-full ${stepIndex >= 5 ? 'bg-emerald-600' : 'bg-slate-200'}"></div>
+                <span class="${stepIndex >= 5 ? 'text-emerald-700 font-bold' : 'text-slate-400'}">4. Delivered</span>
+              </div>
+            </div>
+          </div>
+
+          ${ticket.tracking_number ? `
+            <div class="bg-blue-50/70 p-2.5 rounded-xl border border-blue-100 flex items-center justify-between text-xs text-blue-900">
+              <span class="flex items-center space-x-1.5">
+                <i data-lucide="truck" class="w-4 h-4 text-blue-600"></i>
+                <span>Courier Tracking: <strong>${ticket.tracking_number}</strong> (${ticket.vendor_name || 'Vendor'})</span>
+              </span>
+              <span class="text-[11px] font-medium text-blue-700">ETA: ${ticket.estimated_delivery || 'Arriving Soon'}</span>
+            </div>
+          ` : ''}
+
+          <div class="mt-3 flex items-center justify-between text-xs">
+            <span class="text-slate-400">Assigned Handler: <strong>${ticket.assigned_to}</strong></span>
+            <button onclick="openTicketModal('${ticket.id}')" class="text-brand-600 hover:text-brand-800 font-semibold flex items-center space-x-1">
+              <span>View Full Ticket Details & Discussion</span>
+              <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        `;
+        listContainer.appendChild(item);
+      });
+      lucide.createIcons();
+    }
+
+    // --- STREAMING_CHUNK:Simulated Gmail Inbox Engine ---
+    function renderGmailInbox() {
+      const container = document.getElementById('simulated-gmail-threads');
+      container.innerHTML = '';
+
+      const unreadCount = simulatedGmailInbox.filter(e => !e.convertedTicketId).length;
+      document.getElementById('unread-inbox-badge').innerText = unreadCount;
+
+      simulatedGmailInbox.forEach((mail, idx) => {
+        const row = document.createElement('div');
+        row.className = `p-4 rounded-2xl border transition-all ${mail.convertedTicketId ? 'bg-slate-50/80 border-slate-200 opacity-75' : 'bg-white border-slate-200 shadow-sm hover:border-red-300'}`;
+
+        row.innerHTML = `
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div class="flex items-start space-x-3">
+              <div class="w-9 h-9 rounded-xl ${mail.convertedTicketId ? 'bg-slate-200 text-slate-500' : 'bg-red-50 text-red-600'} flex items-center justify-center flex-shrink-0 mt-0.5">
+                <i data-lucide="${mail.convertedTicketId ? 'check' : 'mail'}" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <div class="flex items-center space-x-2">
+                  <span class="font-bold text-xs text-slate-800">${mail.fromName}</span>
+                  <span class="text-slate-400 text-xs font-mono">&lt;${mail.fromEmail}&gt;</span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-medium">${mail.dept}</span>
+                </div>
+                <h5 class="text-xs font-semibold text-slate-800 mt-1">${mail.subject}</h5>
+                <p class="text-xs text-slate-600 mt-0.5 line-clamp-2">${mail.snippet}</p>
+              </div>
+            </div>
+
+            <div class="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center flex-shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100 gap-2">
+              <span class="text-[11px] text-slate-400">${mail.receivedTime}</span>
+              ${mail.convertedTicketId ? `
+                <button onclick="openTicketModal('${mail.convertedTicketId}')" class="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 text-xs font-semibold flex items-center space-x-1">
+                  <span>Linked: ${mail.convertedTicketId}</span>
+                  <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i>
+                </button>
+              ` : `
+                <button onclick="processGmailIntoTicket(${idx})" class="px-3.5 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-semibold shadow-sm flex items-center space-x-1.5">
+                  <i data-lucide="cpu" class="w-3.5 h-3.5"></i>
+                  <span>Auto-Parse into Ticket</span>
+                </button>
+              `}
+            </div>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+      lucide.createIcons();
+    }
+
+    function processGmailIntoTicket(mailIndex) {
+      playNotificationSound('success');
+      const mail = simulatedGmailInbox[mailIndex];
+      const newId = 'IT-' + (1020 + tickets.length + 1);
+
+      const parsedTicket = {
+        id: newId,
+        requester_name: mail.fromName,
+        requester_email: mail.fromEmail,
+        department: mail.dept,
+        item_name: mail.subject.replace(/Requisition:\s*|URGENT:\s*/gi, '').trim(),
+        category: mail.category || 'Peripherals',
+        estimated_cost: mail.estCost || 199.00,
+        currency: 'USD',
+        justification: mail.snippet,
+        vendor_link: mail.link || 'https://amazon.com',
+        priority: mail.urgency || 'Medium',
+        status: 'New Request',
+        assigned_to: 'Unassigned',
+        source: 'Gmail',
+        created_at: new Date().toISOString(),
+        approvals: {
+          manager: { approved: false, by: null, at: null },
+          finance: { approved: false, by: null, at: null }
+        },
+        po_number: '',
+        vendor_name: '',
+        tracking_number: '',
+        estimated_delivery: '',
+        comments: [
+          {
+            author: 'Gmail Parser (Webhook)',
+            email: 'it-procure@company.com',
+            is_internal: false,
+            is_reply: false,
+            content: `Inbound email successfully ingested from ${mail.fromEmail}. Auto-extracted specs and added to procurement queue.`,
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          }
+        ]
+      };
+
+      tickets.unshift(parsedTicket);
+      mail.convertedTicketId = newId;
+
+      showToast(`Email converted to ticket ${newId}!`, 'success');
+      renderGmailInbox();
+      renderBoard();
+    }
+
+    function fetchSimulatedGmailEmails() {
+      playNotificationSound('click');
+      showToast('Polling it-procure@company.com via Gmail REST API...', 'info');
+      setTimeout(() => {
+        showToast('Sync complete: No new unread messages in Google Workspace queue.', 'success');
+      }, 700);
+    }
+
+    // --- STREAMING_CHUNK:Ticket Details & Workflow Modal Logic ---
+    function openTicketModal(ticketId) {
+      selectedTicketId = ticketId;
+      const t = tickets.find(item => item.id === ticketId);
+      if (!t) return;
+
+      playNotificationSound('click');
+
+      document.getElementById('modal-ticket-badge').innerText = t.id;
+      document.getElementById('modal-ticket-title').innerText = t.item_name;
+      document.getElementById('modal-ticket-meta').innerText = `Requested by ${t.requester_name} (${t.requester_email}) • ${t.department}`;
+
+      document.getElementById('modal-status-select').value = t.status;
+      document.getElementById('modal-assignee-select').value = t.assigned_to;
+
+      // Priority badge
+      const pBadge = document.getElementById('modal-priority-badge');
+      pBadge.innerText = t.priority;
+      pBadge.className = `inline-block text-xs font-semibold px-2.5 py-1 rounded-lg ${
+        t.priority === 'Urgent' ? 'bg-red-100 text-red-700' :
+        t.priority === 'High' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'
+      }`;
+
+      // Item & Details
+      document.getElementById('modal-category').innerText = t.category;
+      document.getElementById('modal-cost').innerText = `$${t.estimated_cost.toLocaleString()}`;
+      document.getElementById('modal-channel').innerText = t.source;
+      
+      const linkElem = document.getElementById('modal-vendor-link');
+      if (t.vendor_link) {
+        linkElem.innerText = t.vendor_link;
+        linkElem.href = t.vendor_link;
+      } else {
+        linkElem.innerText = 'No direct link provided';
+        linkElem.removeAttribute('href');
+      }
+
+      document.getElementById('modal-justification').innerText = t.justification;
+
+      // Approvals
+      renderApprovalButtons(t);
+
+      // Logistics
+      document.getElementById('modal-input-po').value = t.po_number || '';
+      document.getElementById('modal-input-vendor').value = t.vendor_name || '';
+      document.getElementById('modal-input-tracking').value = t.tracking_number || '';
+
+      // Comments
+      renderModalComments(t);
+
+      document.getElementById('ticket-modal').classList.remove('hidden');
+      document.getElementById('ticket-modal').classList.add('flex');
+      lucide.createIcons();
+    }
+
+    function renderApprovalButtons(ticket) {
+      const mgrBtn = document.getElementById('modal-btn-mgr-approve');
+      const mgrLabel = document.getElementById('modal-mgr-status-label');
+      if (ticket.approvals.manager.approved) {
+        mgrBtn.innerText = 'Approved';
+        mgrBtn.className = 'px-3 py-1 text-xs font-semibold rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-300';
+        mgrLabel.innerText = `Approved by ${ticket.approvals.manager.by}`;
+      } else {
+        mgrBtn.innerText = 'Approve';
+        mgrBtn.className = 'px-3 py-1 text-xs font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700';
+        mgrLabel.innerText = 'Pending manager approval';
+      }
+
+      const finBtn = document.getElementById('modal-btn-fin-approve');
+      const finLabel = document.getElementById('modal-fin-status-label');
+      if (ticket.approvals.finance.approved) {
+        finBtn.innerText = 'Approved';
+        finBtn.className = 'px-3 py-1 text-xs font-semibold rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-300';
+        finLabel.innerText = `Approved by ${ticket.approvals.finance.by}`;
+      } else {
+        finBtn.innerText = 'Approve';
+        finBtn.className = 'px-3 py-1 text-xs font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700';
+        finLabel.innerText = 'Required for items > $500';
+      }
+    }
+
+    function toggleApproval(type) {
+      const t = tickets.find(item => item.id === selectedTicketId);
+      if (!t) return;
+
+      playNotificationSound('success');
+      if (type === 'manager') {
+        const current = t.approvals.manager.approved;
+        t.approvals.manager.approved = !current;
+        t.approvals.manager.by = !current ? 'it.manager@company.com' : null;
+        t.approvals.manager.at = !current ? new Date().toISOString() : null;
+      } else if (type === 'finance') {
+        const current = t.approvals.finance.approved;
+        t.approvals.finance.approved = !current;
+        t.approvals.finance.by = !current ? 'finance.controller@company.com' : null;
+        t.approvals.finance.at = !current ? new Date().toISOString() : null;
+      }
+
+      // Auto update status if both are approved
+      if (t.approvals.manager.approved && t.approvals.finance.approved && t.status === 'In Approval') {
+        t.status = 'Approved';
+        document.getElementById('modal-status-select').value = 'Approved';
+        showToast('All approvals secured! Status changed to Approved.', 'success');
+      }
+
+      renderApprovalButtons(t);
+      renderBoard();
+    }
+
+    function updateTicketStatusFromModal(newStatus) {
+      const t = tickets.find(item => item.id === selectedTicketId);
+      if (!t) return;
+      t.status = newStatus;
+      showToast(`Ticket status updated to "${newStatus}"`, 'info');
+      renderBoard();
+    }
+
+    function updateTicketAssignee(newAssignee) {
+      const t = tickets.find(item => item.id === selectedTicketId);
+      if (!t) return;
+      t.assigned_to = newAssignee;
+      showToast(`Assigned to ${newAssignee}`, 'info');
+      renderBoard();
+    }
+
+    function saveLogisticsDetails() {
+      const t = tickets.find(item => item.id === selectedTicketId);
+      if (!t) return;
+
+      t.po_number = document.getElementById('modal-input-po').value.trim();
+      t.vendor_name = document.getElementById('modal-input-vendor').value.trim();
+      t.tracking_number = document.getElementById('modal-input-tracking').value.trim();
+
+      if (t.status === 'Approved' && t.tracking_number) {
+        t.status = 'Ordered';
+        document.getElementById('modal-status-select').value = 'Ordered';
+      }
+
+      playNotificationSound('success');
+      showToast('Logistics and PO saved successfully!', 'success');
+      renderBoard();
+    }
+
+    function renderModalComments(ticket) {
+      const container = document.getElementById('modal-comments-list');
+      container.innerHTML = '';
+
+      if (!ticket.comments || ticket.comments.length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-400 py-2">No notes or replies logged yet.</p>`;
+        return;
+      }
+
+      ticket.comments.forEach(c => {
+        const item = document.createElement('div');
+        const isInternal = c.is_internal;
+
+        item.className = `p-3 rounded-xl text-xs ${
+          isInternal ? 'bg-amber-50/80 border border-amber-200/80 text-amber-950' : 'bg-slate-50 border border-slate-200 text-slate-800'
+        }`;
+
+        item.innerHTML = `
+          <div class="flex items-center justify-between mb-1">
+            <span class="font-bold flex items-center space-x-1.5">
+              <span>${c.author}</span>
+              ${isInternal ? '<span class="text-[10px] bg-amber-200 text-amber-900 px-1.5 py-0.2 rounded font-semibold">Internal Note</span>' : '<span class="text-[10px] bg-blue-100 text-blue-800 px-1.5 py-0.2 rounded font-semibold">Email to Requester</span>'}
+            </span>
+            <span class="text-[10px] text-slate-400">${c.time || 'Today'}</span>
+          </div>
+          <p class="leading-relaxed text-[11px]">${c.content}</p>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function submitModalComment() {
+      const t = tickets.find(item => item.id === selectedTicketId);
+      if (!t) return;
+
+      const input = document.getElementById('modal-comment-input');
+      const text = input.value.trim();
+      if (!text) return;
+
+      const isInternal = document.getElementById('type-internal').checked;
+
+      const newComment = {
+        author: 'IT Helpdesk Agent',
+        email: 'it-procure@company.com',
+        is_internal: isInternal,
+        is_reply: !isInternal,
+        content: text,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+
+      if (!t.comments) t.comments = [];
+      t.comments.push(newComment);
+      input.value = '';
+
+      playNotificationSound('success');
+      if (!isInternal) {
+        showToast(`Email dispatched to ${t.requester_email} via Gmail SMTP!`, 'success');
+      } else {
+        showToast('Internal note saved to ticket.', 'info');
+      }
+
+      renderModalComments(t);
+    }
+
+    function closeTicketModal() {
+      document.getElementById('ticket-modal').classList.add('hidden');
+      document.getElementById('ticket-modal').classList.remove('flex');
+    }
+
+    // --- STREAMING_CHUNK:New Purchase Requisition Form Logic ---
+    function openNewTicketModal() {
+      playNotificationSound('click');
+      document.getElementById('new-ticket-modal').classList.remove('hidden');
+      document.getElementById('new-ticket-modal').classList.add('flex');
+      lucide.createIcons();
+    }
+
+    function closeNewTicketModal() {
+      document.getElementById('new-ticket-modal').classList.add('hidden');
+      document.getElementById('new-ticket-modal').classList.remove('flex');
+    }
+
+    function handleNewTicketSubmit(e) {
+      e.preventDefault();
+      const newId = 'IT-' + (1020 + tickets.length + 1);
+
+      const newTicket = {
+        id: newId,
+        requester_name: document.getElementById('form-requester-name').value.trim(),
+        requester_email: document.getElementById('form-requester-email').value.trim(),
+        department: document.getElementById('form-department').value,
+        item_name: document.getElementById('form-item-name').value.trim(),
+        category: document.getElementById('form-category').value,
+        estimated_cost: parseFloat(document.getElementById('form-cost').value) || 0,
+        currency: 'USD',
+        justification: document.getElementById('form-justification').value.trim(),
+        vendor_link: document.getElementById('form-vendor-link').value.trim(),
+        priority: document.getElementById('form-priority').value,
+        status: 'New Request',
+        assigned_to: 'Unassigned',
+        source: 'Portal',
+        created_at: new Date().toISOString(),
+        approvals: {
+          manager: { approved: false, by: null, at: null },
+          finance: { approved: false, by: null, at: null }
+        },
+        po_number: '',
+        vendor_name: '',
+        tracking_number: '',
+        estimated_delivery: '',
+        comments: [
+          {
+            author: 'System',
+            email: 'portal@company.com',
+            is_internal: false,
+            is_reply: false,
+            content: 'Purchase requisition submitted via Employee Self-Service Portal.',
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          }
+        ]
+      };
+
+      tickets.unshift(newTicket);
+      playNotificationSound('success');
+      showToast(`Purchase requisition ${newId} submitted successfully!`, 'success');
+      closeNewTicketModal();
+      document.getElementById('new-ticket-form').reset();
+      renderBoard();
+      renderEmployeePortal();
+    }
+
+    // --- STREAMING_CHUNK:Simulate Sending Email via Gmail ---
+    function openComposeGmailModal() {
+      playNotificationSound('click');
+      document.getElementById('compose-gmail-modal').classList.remove('hidden');
+      document.getElementById('compose-gmail-modal').classList.add('flex');
+      lucide.createIcons();
+    }
+
+    function closeComposeGmailModal() {
+      document.getElementById('compose-gmail-modal').classList.add('hidden');
+      document.getElementById('compose-gmail-modal').classList.remove('flex');
+    }
+
+    function simulateSendUserEmail() {
+      switchView('gmail');
+      openComposeGmailModal();
+    }
+
+    function dispatchSimulatedGmail() {
+      const fromEmail = document.getElementById('sim-from').value.trim();
+      const subject = document.getElementById('sim-subject').value.trim();
+      const body = document.getElementById('sim-body').value.trim();
+
+      if (!subject || !body) return;
+
+      const newMail = {
+        msgId: 'msg-gmail-' + Math.floor(10000 + Math.random() * 90000),
+        fromName: fromEmail.split('@')[0].replace('.', ' '),
+        fromEmail: fromEmail,
+        dept: 'Engineering',
+        subject: subject,
+        snippet: body,
+        estCost: 298.00,
+        category: 'Peripherals',
+        link: 'https://keychron.com',
+        receivedTime: 'Just now',
+        urgency: 'Medium',
+        convertedTicketId: null
+      };
+
+      simulatedGmailInbox.unshift(newMail);
+      closeComposeGmailModal();
+      playNotificationSound('success');
+      showToast('Simulated email delivered to it-procure@company.com inbox!', 'success');
+      renderGmailInbox();
+    }
+
+    // --- STREAMING_CHUNK:Data Export and SQL Copy Utilities ---
+    function exportData() {
+      playNotificationSound('click');
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(tickets, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `it_procure_tickets_${new Date().toISOString().slice(0,10)}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      showToast('Ticket database exported to JSON', 'info');
+    }
+
+    function copySqlSchema() {
+      const codeText = document.getElementById('sql-code-block').innerText;
+      const btnText = document.getElementById('copy-sql-btn-text');
+      
+      const tempArea = document.createElement('textarea');
+      tempArea.value = codeText;
+      document.body.appendChild(tempArea);
+      tempArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(tempArea);
+
+      playNotificationSound('success');
+      btnText.innerText = 'Copied to Clipboard!';
+      setTimeout(() => {
+        btnText.innerText = 'Copy Full SQL Script';
+      }, 2000);
+      showToast('SQL Schema copied to clipboard!', 'success');
+    }
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      
+      let border = 'border-slate-800 bg-slate-900 text-white';
+      let icon = 'info';
+      if (type === 'success') {
+        border = 'border-emerald-600 bg-emerald-950 text-emerald-100';
+        icon = 'check-circle';
+      }
+
+      toast.className = `px-4 py-3 rounded-2xl shadow-xl border flex items-center space-x-2 text-xs transition-all duration-300 transform translate-y-2 opacity-0 pointer-events-auto`;
+      toast.innerHTML = `<i data-lucide="${icon}" class="w-4 h-4 text-emerald-400 flex-shrink-0"></i><span>${message}</span>`;
+      container.appendChild(toast);
+      lucide.createIcons();
+
+      setTimeout(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      }, 10);
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    // --- STREAMING_CHUNK:App Initialization on Window Load ---
+    window.onload = function() {
+      renderBoard();
+      renderEmployeePortal();
+      renderGmailInbox();
+      lucide.createIcons();
+    };
+  </script>
+</body>
+</html>
